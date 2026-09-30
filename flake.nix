@@ -18,5 +18,8 @@
           delve
         ];
       };
+      shellHook = ''
+        exec fish
+      '';
     };
 }
