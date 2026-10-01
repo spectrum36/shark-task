@@ -80,6 +80,7 @@ func update(db *sql.DB) http.HandlerFunc {
 			panic(err)
 		}
 		query := fmt.Sprintf("UPDATE task SET name = '%s', due = '%s' WHERE id = %d;", updateTask.Name, updateTask.Due, updateTask.Id)
+
 		_, err = db.Exec(query)
 		if err != nil {
 			panic(err)
