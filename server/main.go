@@ -25,12 +25,19 @@ func readTask(r *http.Request) (Task, error) {
 	return newTask, nil
 }
 
-func writeTask(w http.ResponseWriter, task []Task) error{
-	err := json.NewEncoder(w).Encode(task)
+func writeTask(w http.ResponseWriter, tasks []Task) error {
+	err := json.NewEncoder(w).Encode(tasks)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func realId(db *sql.DB, num int) (int, error) {
+	var id int
+	err := db.QueryRow("SELECT id FROM task ORDER BY id LIMIT 1 OFFSET ?", num-1).Scan(&id)
+	fmt.Println(id)
+	return id, err
 }
 
 func main() {
@@ -39,7 +46,7 @@ func main() {
 		panic(err)
 	}
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS task (
-		id INT AUTO_INCREMENT PRIMARY KEY,
+		id INTEGER PRIMARY KEY,
 		name STRING NOT NULL,
 		due STRING,
 		complete BOOLEAN NOT NULL DEFAULT(0)
@@ -62,7 +69,7 @@ func insert(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			panic(err)
 		}
-		query := fmt.Sprintf("INSERT INTO task (name, due) VALUES ('%s', '%s');", newTask.Name, newTask.Due)
+		query := fmt.Sprintf(`INSERT INTO task (id, name, due) VALUES (NULL, "%s", "%s");`, newTask.Name, newTask.Due)
 		fmt.Println(query)
 		_, err = db.Exec(query)
 		if err != nil {
@@ -78,7 +85,11 @@ func delete(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			panic(err)
 		}
-		query := fmt.Sprintf("DELETE FROM task WHERE id = '%d';", deleteTask.Id)
+		id, err := realId(db, deleteTask.Id)
+		if err != nil {
+			panic(err)
+		}
+		query := fmt.Sprintf("DELETE FROM task WHERE id = %d;", id)
 		_, err = db.Exec(query)
 		if err != nil {
 			panic(err)
@@ -93,7 +104,27 @@ func update(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			panic(err)
 		}
-		query := fmt.Sprintf("UPDATE task SET name = '%s', due = '%s', complete = '%t' WHERE id = %d;", updateTask.Name, updateTask.Due, updateTask.Comp, updateTask.Id)
+		updateTask.Id, err = realId(db, updateTask.Id)
+		if err != nil {
+			panic(err)
+		}
+		var currTask Task
+		query := fmt.Sprintf("SELECT * FROM task WHERE id = %d", updateTask.Id)
+		err = db.QueryRow(query).Scan(&currTask.Id, &currTask.Name, &currTask.Due, &currTask.Comp)
+		if err != nil {
+			panic(err)
+		}
+
+		if updateTask.Name == "default" {
+			updateTask.Name = currTask.Name
+		}
+		if updateTask.Due == "01/01/1970" {
+			updateTask.Due = currTask.Due
+		}
+		if !updateTask.Comp {
+			updateTask.Comp = currTask.Comp
+		}
+		query = fmt.Sprintf("UPDATE task SET name = '%s', due = '%s', complete = '%t' WHERE id = %d;", updateTask.Name, updateTask.Due, updateTask.Comp, updateTask.Id)
 
 		_, err = db.Exec(query)
 		if err != nil {
@@ -104,7 +135,7 @@ func update(db *sql.DB) http.HandlerFunc {
 
 func list(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		query := "SELECT * FROM task ORDER BY id"
+		query := "SELECT ROW_NUMBER() OVER (ORDER BY id) AS num, name, due, complete FROM task"
 		rows, err := db.Query(query)
 		if err != nil {
 			panic(err)
@@ -115,15 +146,15 @@ func list(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			panic(err)
 		}
-		var listTasks []Task
-		
+		listTasks := []Task{}
+
 		for rows.Next() {
-			t := &Task{}
-			err = rows.Scan(&t.Id, &t.Comp, &t.Due, &t.Name)
+			var t Task
+			err = rows.Scan(&t.Id, &t.Name, &t.Due, &t.Comp)
 			if err != nil {
 				panic(err)
 			}
-			listTasks = append(listTasks, *t)
+			listTasks = append(listTasks, t)
 		}
 		err = writeTask(w, listTasks)
 		if err != nil {
