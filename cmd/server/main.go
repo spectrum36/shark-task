@@ -48,16 +48,25 @@ func realId(db *sql.DB, num int) (int, error) {
 func main() {
 	f := flag.Bool("dev", false, "changes db dir for development")
 	flag.Parse()
-
-	b, err := os.ReadFile("config.yaml")
+	
+	var b []uint8
+	var err error
+	if *f {
+		b, err = os.ReadFile("config.yaml")
+	} else {
+		b, err = os.ReadFile("/etc/sharktasks-server/config.yaml")
+	}
 	if err != nil {
 		panic(err)
 	}
 	var cfg Config
 	err = yaml.Load(b, &cfg)
+	if err != nil {
+		panic(err)
+	}
 	var db *sql.DB
 	if *f {
-		db, err = sql.Open("sqlite", "./task.db")
+		db, err = sql.Open("sqlite", "./tasks.db")
 	} else {
 		db, err = sql.Open("sqlite", "/var/lib/sharktasks/tasks.db")
 	}
@@ -78,7 +87,9 @@ func main() {
 	http.HandleFunc("/update", update(db))
 	http.HandleFunc("/list", list(db))
 	http.HandleFunc("/test", test)
-	fmt.Println("server up")
+	if *f {
+		fmt.Println("server up")
+	}
 	log.Fatal(http.ListenAndServe(":" + cfg.Port, nil))
 }
 

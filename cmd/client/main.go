@@ -101,13 +101,19 @@ func main() {
 	defName := "default"
 	defDue := "01/01/1970"
 	defId := -1
-	var name = flag.String("name", defName, "name of task")
-	var id = flag.Int("id", defId, "task id")
-	var due = flag.String("due", defDue, "due date of task (DD/MM/YYYY)")
+	name := flag.String("name", defName, "name of task")
+	id := flag.Int("id", defId, "task id")
+	due := flag.String("due", defDue, "due date of task (DD/MM/YYYY)")
+	f := flag.Bool("dev", false, "use ./config.yaml for dev work")
 
 	flag.Parse()
-
-	b, err := os.ReadFile("config.yaml")
+	var err error
+	var b []uint8
+	if *f {
+		b, err = os.ReadFile("config.yaml")
+	} else {
+		b, err = os.ReadFile("/etc/sharktasks/config.yaml")
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -247,7 +253,7 @@ func main() {
 		}
 		list(url)
 	case "genconf":
-
+		fmt.Println("---\nhost: \"server url goes here\"\nport: \"server port goes here\"")
 	default:
 		fmt.Println("command not recognized, type --help to look at available commands")
 	}
