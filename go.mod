@@ -1,6 +1,12 @@
-module gotask
+module shark-task
 
 go 1.26.7
+
+require (
+	github.com/spf13/pflag v1.0.10
+	go.yaml.in/yaml/v4 v4.0.0-rc.6
+	modernc.org/sqlite v1.60.1
+)
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -12,5 +18,4 @@ require (
 	modernc.org/libc v1.77.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
-	modernc.org/sqlite v1.60.1 // indirect
 )
