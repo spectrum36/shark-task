@@ -48,7 +48,7 @@
         {
         options.services.sharktasks-server = {
           enable = lib.mkEnableOption "sharktasks server";
-          settings = {
+          settings = lib.mkOption {
             type = yaml.type;
             default = { 
               port = 8080;
