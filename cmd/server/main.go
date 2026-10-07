@@ -68,7 +68,7 @@ func main() {
 	if *f {
 		db, err = sql.Open("sqlite", "./tasks.db")
 	} else {
-		db, err = sql.Open("sqlite", "/var/lib/sharktasks/tasks.db")
+		db, err = sql.Open("sqlite", "/var/lib/sharktasks-server/tasks.db")
 	}
 	if err != nil {
 		panic(err)
