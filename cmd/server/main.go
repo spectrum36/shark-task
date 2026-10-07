@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"go.yaml.in/yaml/v4"
+	flag "github.com/spf13/pflag"
 )
 
 type Task struct {
@@ -45,13 +46,21 @@ func realId(db *sql.DB, num int) (int, error) {
 }
 
 func main() {
+	f := flag.Bool("dev", false, "changes db dir for development")
+	flag.Parse()
+
 	b, err := os.ReadFile("config.yaml")
 	if err != nil {
 		panic(err)
 	}
 	var cfg Config
 	err = yaml.Load(b, &cfg)
-	db, err := sql.Open("sqlite", "./tasks.db")
+	var db *sql.DB
+	if *f {
+		db, err = sql.Open("sqlite", "./task.db")
+	} else {
+		db, err = sql.Open("sqlite", "/var/lib/sharktasks/tasks.db")
+	}
 	if err != nil {
 		panic(err)
 	}
