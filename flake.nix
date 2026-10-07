@@ -68,7 +68,7 @@
         };
       config = lib.mkMerge [
             (lib.mkIf sCfg.enable {
-              environment.etc."sharktasks/config.yaml".source = serverCfgFile;
+              environment.etc."sharktasks-server/config.yaml".source = serverCfgFile;
               systemd.services.sharktasks-server = {
                 wantedBy = ["multi-user.target"];
                 restartTriggers = [serverCfgFile];
