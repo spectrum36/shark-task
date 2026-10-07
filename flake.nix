@@ -38,7 +38,7 @@
       };
 
       nixosModules.default = { config, lib, pkgs, ... }: {
-        options.services.sharktask-server = {
+        options.services.sharktasks-server = {
           enable = lib.mkEnableOption "sharktasks server";
           port = lib.mkOption { type = lib.types.port; default = 8080; };
         };
