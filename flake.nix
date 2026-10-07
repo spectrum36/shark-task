@@ -79,7 +79,7 @@
                 };
               };
             })
-            (lib.mkIf cfg.enable {
+            (lib.mkIf cCfg.enable {
               environment.systemPackages = [self.packages.${sys}.sharktasks ];
               environment.etc."sharktasks/config.yaml".source = yaml.generate "config.yaml" cCfg.settings;
             })
